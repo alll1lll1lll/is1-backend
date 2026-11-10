@@ -1,0 +1,37 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: is1backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/studs}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:}
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      encoding: UTF-8
+  jpa:
+    open-in-view: false
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        max-page-size: 100
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    ru.itmo.is1: ${LOG_LEVEL_APP:INFO}
+    org.eclipse.persistence: ${LOG_LEVEL_ECLIPSELINK:WARN}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+  jwt:
+    secret: ${JWT_SECRET:}
+    access-token-ttl: ${JWT_ACCESS_TTL:PT15M}
+    refresh-token-ttl: ${JWT_REFRESH_TTL:P7D}
+    cleanup-cron: ${JWT_CLEANUP_CRON:0 0 3 * * *}

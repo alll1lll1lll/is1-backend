@@ -1,0 +1,77 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'ru.itmo'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations.configureEach {
+    exclude group: 'org.hibernate.orm', module: 'hibernate-core'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    implementation 'org.eclipse.persistence:org.eclipse.persistence.jpa:4.0.4'
+    implementation 'org.eclipse.persistence:org.eclipse.persistence.extension:4.0.4'
+    implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'io.zonky.test:embedded-postgres:2.0.7'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+def frontendDir = file('../is1frontend')
+
+if (frontendDir.exists() && !project.hasProperty('skipFrontend')) {
+    def npm = System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm'
+
+    def buildFrontend = tasks.register('buildFrontend', Exec) {
+        workingDir frontendDir
+        commandLine npm, 'run', 'build'
+        inputs.dir(new File(frontendDir, 'src'))
+        inputs.dir(new File(frontendDir, 'public'))
+        inputs.files(new File(frontendDir, 'index.html'), new File(frontendDir, 'package.json'),
+                new File(frontendDir, 'vite.config.js'))
+        outputs.dir(new File(frontendDir, 'dist'))
+    }
+
+    tasks.named('processResources') {
+        from(buildFrontend) {
+            into 'static'
+        }
+    }
+}
